@@ -1,0 +1,35 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "test for security group",
+  "Parameters": {
+    "WhitelistTest": {
+      "Type": "List<String>",
+      "Description": "List of CIDRS to whitelist",
+      "Default": "tcp:10.0.0.1/32:80, udp:10.10.10.0/24:53, tcp:10.10.10.0/24:21-22"
+    }
+  },
+  "Transform": [
+    "CfSnippetSg"
+  ],
+  "Resources": {
+    "SgTest": {
+      "Type": "AWS::EC2::SecurityGroup",
+      "Properties": {
+        "GroupName": "SgTest",
+        "GroupDescription": "Security Group Test"
+      }
+    },
+    "SgTestEgressRules": {
+      "Type": "Custom::CfSnippetSg",
+      "Properties": {
+        "ServiceToken": "",
+        "Direction": "Egress",
+        "Rules": { "Ref": "WhitelistTest" },
+        "FromTo": "Rabobank",
+        "TargetGroup": {
+          "Ref": "SgTest"
+        }
+      }
+    }
+  }
+}
