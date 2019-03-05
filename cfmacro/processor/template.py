@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 import copy
 import json
-from typing import Dict
+from typing import Dict, Union
 
 from .base import ResourceProcessor
 from .engine import ProcessorEngine
@@ -24,7 +24,7 @@ class TemplateProcessor(object):
         self._processed_resources = None
         self._template_params = {}
 
-    def process(self, fragment: Dict[str, dict], template_params: Dict[str, dict]):
+    def process(self, fragment: Dict[str, dict], template_params: Dict[str, Union[dict, list, str]]):
         self._template = fragment
         self._template_params = template_params
         self._processed_resources = self.process_resources(self._template['Resources'])

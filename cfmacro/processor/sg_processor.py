@@ -46,8 +46,10 @@ class SgProcessor(ResourceProcessor):
         """ calculate the name from a target group node """
         if isinstance(tg, dict):
             name = tg.get('Ref', None)
-        else:
+        elif isinstance(tg, str):
             name = tg
+        else:
+            name = None
         if not name:
             raise ValueError('Unable to calculate Sg key name')
         return name
