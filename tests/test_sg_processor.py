@@ -52,3 +52,57 @@ def test_sg_builder(args: dict, outcome: CloudFormationResource):
     r = SgProcessor.sg_builder(**args)
     assert r.name == outcome.name
     assert r.node == outcome.node
+
+
+@pytest.mark.parametrize('rules, ruleset, params', [
+    # test : rules as string with single entry
+    ('tcp:192.168.0.1/24:80',
+     [dict(proto='tcp',
+           cidr='192.168.0.1/24',
+           from_port='80',
+           to_port='80')],
+     {}),
+    # test : rules as string with multiple comma separated entries
+    ('tcp:192.168.1.1/32:80, tcp:192.168.1.2/32:80, udp:10.10.10.10/32:20-21',
+     [dict(proto='tcp',
+           cidr='192.168.1.1/32',
+           from_port='80',
+           to_port='80'),
+      dict(proto='tcp',
+           cidr='192.168.1.2/32',
+           from_port='80',
+           to_port='80'),
+      dict(proto='udp',
+           cidr='10.10.10.10/32',
+           from_port='20',
+           to_port='21')
+      ],
+     {}),
+    # test : rules in parameters as list of strings
+    ({'Ref': 'testRules'},
+     [dict(proto='tcp',
+           cidr='192.168.1.1/32',
+           from_port='80',
+           to_port='80'),
+      dict(proto='tcp',
+           cidr='192.168.1.2/32',
+           from_port='80',
+           to_port='80'),
+      dict(proto='udp',
+           cidr='10.10.10.10/32',
+           from_port='20',
+           to_port='21')
+      ],
+     {'testRules': ['tcp:192.168.1.1/32:80', 'tcp:192.168.1.2/32:80', 'udp:10.10.10.10/32:20-21']})
+])
+def test_parse_rules(rules, ruleset, params):
+    node = {
+        'Properties': {
+            'Rules': rules
+        }
+    }
+
+    sgp = SgProcessor()
+    sgp._template_params = params
+    processed_rules = sgp._parse_rules(node)
+    assert processed_rules == ruleset
