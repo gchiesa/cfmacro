@@ -8,6 +8,7 @@ import tempfile
 import zipfile
 from pathlib import Path
 from subprocess import CalledProcessError
+import setuptools
 
 from . import logging_format_template
 
@@ -81,6 +82,16 @@ def main():
         download_requirements(requirements, folder)
         logger.info(f'Packaging requirements...')
         add_libraries(package, folder)
+
+    # looking for additional python packages
+    function_file_path = os.path.dirname(os.path.realpath(args.function_file.name))
+    level_packages = setuptools.find_packages(where=function_file_path)
+    if level_packages:
+        logger.info(f'Detected lambda sibling packages: {level_packages}')
+        for folder in level_packages:
+            path_to_include = os.path.join(function_file_path, folder)
+            add_libraries(package, path_to_include)
+            logger.debug(f'Folder {path_to_include} added to the lambda package')
 
     # add the lambda code
     logger.info(f'Adding lambda function: {args.function_file.name}')
