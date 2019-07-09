@@ -54,10 +54,12 @@ def download_requirements(requirements, folder):
 
 
 def add_libraries(package, folder):
+    logger = logging.getLogger('add-libraries')
     current_directory = os.getcwd()
     os.chdir(folder)
     files = list(Path('.').glob('**/*'))
     for f in files:
+        logger.info(f'adding file {f}')
         package.write(f)
     os.chdir(current_directory)
 

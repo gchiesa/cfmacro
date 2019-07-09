@@ -44,8 +44,10 @@ class SgProcessor(ResourceProcessor):
     @staticmethod
     def target_group_to_name(tg):
         """ calculate the name from a target group node """
-        if isinstance(tg, dict):
-            name = tg.get('Ref', None)
+        if isinstance(tg, dict) and tg.get('Ref', None):
+            name = tg['Ref']
+        elif isinstance(tg, dict) and tg.get('Fn::GetAtt', None):
+            name = tg['Fn::GetAtt'][0] if tg['Fn::GetAtt'][1] == 'GroupId' else None
         elif isinstance(tg, str):
             name = tg
         else:

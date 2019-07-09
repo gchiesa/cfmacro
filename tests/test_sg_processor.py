@@ -16,6 +16,7 @@ __status__ = "PerpetualBeta"
 @pytest.mark.parametrize('target_group, expected_output', [
     ({'Ref': 'TestTargetGroup'}, 'TestTargetGroup'),
     ('TestTargetGroupString', 'TestTargetGroupString'),
+    ({'Fn::GetAtt': ['TestTargetGroup', 'GroupId']}, 'TestTargetGroup')
 ])
 def test_target_group_to_name(target_group, expected_output):
     assert SgProcessor.target_group_to_name(target_group) == expected_output
@@ -24,7 +25,8 @@ def test_target_group_to_name(target_group, expected_output):
 @pytest.mark.parametrize('bad_input', [
     (['TargetGroupName']),
     None,
-    ({'Key': 'Value'})
+    ({'Key': 'Value'}),
+    ({'Fn::GetAttr': ['TestTargetGroup', 'VpcId']}, 'TestTargetGroup')
 ])
 def test_target_group_to_name_wrong_input(bad_input):
     with pytest.raises(ValueError) as excinfo:

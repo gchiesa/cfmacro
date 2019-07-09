@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
-from .processor import SgProcessor
-from .processor.engine import ProcessorEngine
-from .processor.template import TemplateProcessor
+from cfmacro.processor import SgProcessor
+from cfmacro.processor.engine import ProcessorEngine
+from cfmacro.processor.template import TemplateProcessor
 
 
 def lambda_handler(event, context):

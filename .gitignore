@@ -103,3 +103,4 @@ ENV/
 
 # idea
 .idea
+/cfmacro/_resources/examples/*.zip

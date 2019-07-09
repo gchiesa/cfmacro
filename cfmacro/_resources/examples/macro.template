@@ -1,0 +1,81 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "",
+  "Parameters": {
+    "LambdaTransformerPackage": {
+      "Type": "String",
+      "Description": "S3 path/key of the lambda zip package"
+    }
+  },
+  "Resources": {
+    "RoleLambdaCFProcessor": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Principal": {
+                "Service": [
+                  "lambda.amazonaws.com"
+                ]
+              },
+              "Action": [
+                "sts:AssumeRole"
+              ]
+            }
+          ]
+        },
+        "Path": "/",
+        "RoleName": "RoleLambdaCFProcessor",
+        "ManagedPolicyArns": [
+          { "Ref": "PolicyRoleLambdaCFProcessor" }
+        ]
+      }
+    },
+    "PolicyRoleLambdaCFProcessor": {
+      "Type": "AWS::IAM::ManagedPolicy",
+      "Properties": {
+        "PolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Action": [
+                "logs:CreateLogGroup",
+                "logs:CreateLogStream",
+                "logs:PutLogEvents"
+              ],
+              "Resource": [
+                { "Fn::Sub": [ "arn:aws:logs:${r}:${a}:log-group:/aws/lambda/CFProcessor:*", { "a": { "Ref": "AWS::AccountId" }, "r": { "Ref": "AWS::Region" } } ] }
+              ]
+            }
+          ]
+        }
+      }
+    },
+    "LambdaCFProcessor": {
+      "Type": "AWS::Lambda::Function",
+      "Properties": {
+        "Code": {
+          "S3Bucket": { "Fn::Sub": [ "${a}", { "a": { "Ref": "AWS::AccountId" } } ] },
+          "S3Key": { "Ref": "LambdaTransformerPackage" }
+        },
+        "FunctionName": "CFProcessor",
+        "Handler": "lambda.lambda_handler",
+        "Role": { "Fn::GetAtt": [ "RoleLambdaCFProcessor", "Arn" ] },
+        "Runtime": "python3.7",
+        "Timeout": 900
+      }
+    },
+    "Macro": {
+      "Type": "AWS::CloudFormation::Macro",
+      "Properties": {
+        "Name": "CFProcessor",
+        "FunctionName": { "Fn::GetAtt": [ "LambdaCFProcessor", "Arn" ] },
+        "Description": "Macro that generates Security Group Ingress/Egress from list of cidrs"
+      }
+    }
+  }
+}

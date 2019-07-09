@@ -9,7 +9,7 @@
     }
   },
   "Transform": [
-    "CfSnippetSg"
+    "CFProcessor"
   ],
   "Resources": {
     "SgTest": {
@@ -26,9 +26,7 @@
         "Direction": "Egress",
         "Rules": { "Ref": "WhitelistTest" },
         "FromTo": "Rabobank",
-        "TargetGroup": {
-          "Ref": "SgTest"
-        }
+        "TargetGroup": { "Ref": "SgTest" }
       }
     }
   }

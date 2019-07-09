@@ -6,9 +6,9 @@ include README.rst
 include requirements.txt
 
 recursive-include cfmacro *.py
-recursive-include cfmacro/examples *
+recursive-include cfmacro/_resources *
 recursive-include tests *
 recursive-exclude * __pycache__
 recursive-exclude * *.py[co]
-
+recursive-exclude cfmacro/_resources/examples *.zip
 recursive-include docs *.rst conf.py Makefile make.bat *.jpg *.png *.gif
