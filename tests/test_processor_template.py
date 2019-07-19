@@ -3,9 +3,9 @@
 from typing import Dict
 
 from cfmacro.cloudformation.elements import CloudFormationResource
-from cfmacro.processor.base import ResourceProcessor
-from cfmacro.processor.engine import ProcessorEngine
-from cfmacro.processor.template import TemplateProcessor
+from cfmacro.core.base import ResourceProcessor
+from cfmacro.core.engine import ProcessorEngine
+from cfmacro.core.template import TemplateProcessor
 
 __author__ = "Giuseppe Chiesa"
 __copyright__ = "Copyright 2017, Giuseppe Chiesa"
@@ -17,14 +17,14 @@ __status__ = "PerpetualBeta"
 
 
 def test_process(mocker, cloudformation_fragment, cloudformation_parameters):
-    mocker.patch('cfmacro.processor.template.TemplateProcessor.process_resources')
+    mocker.patch('cfmacro.core.template.TemplateProcessor.process_resources')
     tp = TemplateProcessor(ProcessorEngine())
     tp.process(fragment=cloudformation_fragment, template_params=cloudformation_parameters)
     tp.process_resources.assert_called_once_with(cloudformation_fragment['Resources'])
 
 
 def test_process_resources(mocker, cloudformation_fragment, cloudformation_parameters):
-    mocker.patch('cfmacro.processor.template.TemplateProcessor.process_resource')
+    mocker.patch('cfmacro.core.template.TemplateProcessor.process_resource')
 
     class TestProcessor(ResourceProcessor):
         tag = 'TestTag'

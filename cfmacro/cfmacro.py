@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
 
-from .processor import SgProcessor
-from .processor.engine import ProcessorEngine
-from .processor.template import TemplateProcessor
+from .core.engine import ProcessorEngine
+from .core.template import TemplateProcessor
+from .processors import SgProcessor
 
 
 def lambda_handler(event, context):
     """
-    Implement a processor handler for security groups ingress / egress
+    Implement a core handler for security groups ingress / egress
 
 
     :param event:

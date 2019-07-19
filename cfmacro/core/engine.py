@@ -17,10 +17,15 @@ class ProcessorEngine(object):
 
     def register_processor(self, processor):
         if not issubclass(processor, ResourceProcessor):
-            raise ValueError('cannot register processor. Not a valid object')
+            raise ValueError('cannot register core. Not a valid object')
         self.processors.append(processor)
         self._update_processor_map()
 
     def _update_processor_map(self):
         for processor in self.processors:
             self.processor_map[processor.tag] = processor
+
+
+__all__ = [
+    ProcessorEngine
+]

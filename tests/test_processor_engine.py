@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 import pytest
 
-from cfmacro.processor.engine import ProcessorEngine
-from cfmacro.processor import SgProcessor
+from cfmacro.core.engine import ProcessorEngine
+from cfmacro.processors import SgProcessor
 
 __author__ = "Giuseppe Chiesa"
 __copyright__ = "Copyright 2017, Giuseppe Chiesa"

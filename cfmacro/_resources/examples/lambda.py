@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
 
-from cfmacro.processor import SgProcessor
-from cfmacro.processor.engine import ProcessorEngine
-from cfmacro.processor.template import TemplateProcessor
+from cfmacro.processors import SgProcessor
+from cfmacro.core.engine import ProcessorEngine
+from cfmacro.core.template import TemplateProcessor
 
 
 def lambda_handler(event, context):
     """
-    Implement a processor handler for security groups ingress / egress
+    Implement a core handler for security groups ingress / egress
 
 
     :param event:

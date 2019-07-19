@@ -34,7 +34,7 @@ setup(
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
     ],
-    description="A CloudFormation Toolkit to   easily implement processor for Macro",
+    description="A CloudFormation Toolkit to   easily implement core for Macro",
     install_requires=requirements,
     license="MIT license",
     long_description=readme + '\n\n' + history,
