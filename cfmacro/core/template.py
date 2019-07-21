@@ -45,9 +45,9 @@ class TemplateProcessor(object):
             resource.name: resource.node
         }
         if self._processor_engine.processor_map.get(resource.node['Type'], None):
-            # instantiate the proper processor for the node type
+            # instantiate the proper core for the node type
             processor = self._processor_engine.processor_map[resource.node['Type']]()  # type: ResourceProcessor
-            # apply the processor
+            # apply the core
             result = processor.process(resource, self._template_params)
         return result
 
@@ -57,3 +57,8 @@ class TemplateProcessor(object):
     def to_json(self):
         json_data = json.dumps(self._processed_template, indent=2)
         return json_data
+
+
+__all__ = [
+    TemplateProcessor
+]

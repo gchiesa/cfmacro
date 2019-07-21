@@ -23,10 +23,10 @@
       "Type": "Custom::CfSnippetSg",
       "Properties": {
         "ServiceToken": "",
-        "Direction": "Egress",
+        "Direction": "Ingress",
         "Rules": { "Ref": "WhitelistTest" },
         "FromTo": "Rabobank",
-        "TargetGroup": { "Ref": "SgTest" }
+        "TargetGroup": { "Fn::GetAtt": [ "SgTest", "GroupId" ] }
       }
     }
   }
