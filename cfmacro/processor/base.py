@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 from abc import ABCMeta, abstractmethod
 from typing import Dict
-
+import logging
 from ..cloudformation.elements import CloudFormationResource
 
 __author__ = "Giuseppe Chiesa"
@@ -14,6 +14,10 @@ __status__ = "PerpetualBeta"
 
 
 class ResourceProcessor(metaclass=ABCMeta):
+    def __init__(self):
+        self.logger = logging.getLogger(self.__class__.__name__)
+        self._template_params = None
+
     @property
     @abstractmethod
     def tag(self):

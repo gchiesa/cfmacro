@@ -14,6 +14,133 @@ __email__ = "mail@giuseppechiesa.it"
 __status__ = "PerpetualBeta"
 
 
+
+TEMPLATE = '''
+"KMSKeyforRoleBusinessVpn": {
+      "Type": "AWS::KMS::Key",
+      "Properties": {
+        "Description": "Key used from specific role",
+        "KeyPolicy": {
+          "Version": "2012-10-17",
+          "Id": "KEY-POLICY",
+          "Statement": [
+            {
+              "Sid": "Allow administration of the key",
+              "Effect": "Allow",
+              "Principal": {
+                "AWS": [
+                  { "Fn::Sub": [ "arn:aws:sts::${account}:root", { "account": { "Ref": "AWS::AccountId" } } ] }
+                ]
+              },
+              "Action": [
+                "kms:Create*",
+                "kms:Describe*",
+                "kms:Enable*",
+                "kms:List*",
+                "kms:Put*",
+                "kms:Update*",
+                "kms:Revoke*",
+                "kms:Disable*",
+                "kms:Get*",
+                "kms:Delete*",
+                "kms:ScheduleKeyDeletion",
+                "kms:CancelKeyDeletion",
+                "kms:TagResource"
+              ],
+              "Resource": "*"
+            },
+            {
+              "Sid": "Allow use of the key for consuming",
+              "Effect": "Allow",
+              "Principal": {
+                "AWS": [ 
+                    {% for role_arn in role_capability_consuming %}
+                        role_arn
+                    {% endfor %}
+                ]
+              },
+              "Action": [
+                "kms:Decrypt",
+                "kms:DescribeKey"
+              ],
+              "Resource": "*"
+            },
+            {
+              "Sid": "Allow use of the key",
+              "Effect": "Allow",
+              "Principal": {
+                "AWS": { "Fn::Sub": [ "arn:aws:iam::${account}:role/RoleCredentialServerCryptDecrypt", { "account": { "Ref": "AWS::AccountId" } } ] }
+              },
+              "Action": [
+                "kms:Encrypt",
+                "kms:Decrypt",
+                "kms:ReEncrypt*",
+                "kms:GenerateDataKey*",
+                "kms:DescribeKey"
+              ],
+              "Resource": "*"
+            },
+            {
+              "Sid": "Allow use of the key",
+              "Effect": "Allow",
+              "Principal": {
+                "AWS": { "Fn::Sub": [ "arn:aws:iam::${account}:role/RoleCredentialServerCryptOnly", { "account": { "Ref": "AWS::AccountId" } } ] }
+              },
+              "Action": [
+                "kms:Encrypt",
+                "kms:GenerateDataKey*",
+                "kms:DescribeKey"
+              ],
+              "Resource": "*"
+            }
+          ]
+        }
+      }
+    },
+    "AliasKMSKeyforRoleBusinessVpn": {
+      "Type": "AWS::KMS::Alias",
+      "Properties": {
+        "AliasName": "alias/RoleBusinessVpn",
+        "TargetKeyId": {
+          "Ref": "KMSKeyforRoleBusinessVpn"
+        }
+      }
+    },
+'''
+
+
+class KMSProcessor(ResourceProcessor):
+    tag = 'Custom::CfSnippetKMS'
+    template = TEMPLATE
+
+
+    def _generate_jinja_vars(self, properties):
+        j2_vars = {}
+        if not properties.get('RoleCapabilityUse', None):
+            raise ValueError('Missing required property RoleCapabilityUse')
+        pass
+        # "RoleCapabilityConsuming": [""],
+        # "RoleCapabilityEncrypt": [""],
+        # "RoleCapabilityEncryptDecrypt": [""]
+
+    def process(self, resource: CloudFormationResource, params: dict) -> Dict[str, dict]:
+        self._template_params = params
+        rules = self._parse_rules(resource.node)
+
+        # if there are not rules we return back the node unparsed
+        if not rules:
+            return {resource.name: resource.node}
+
+        result = {}
+        for rule_id, rule in enumerate(rules):
+            sg = self.sg_builder(resource.properties['Direction'],
+                                 resource.properties['TargetGroup'],
+                                 resource.properties['FromTo'],
+                                 rule, rule_id)
+            result[sg.name] = sg.node
+        return result
+
+
 class SgProcessor(ResourceProcessor):
     """
     Security Group Macro Processor
@@ -40,7 +167,6 @@ class SgProcessor(ResourceProcessor):
         """
         self.logger = logging.getLogger(self.__class__.__name__)
         self._template_params = None
-        super(SgProcessor, self).__init__()
 
     @staticmethod
     def target_group_to_name(tg):
@@ -58,15 +184,6 @@ class SgProcessor(ResourceProcessor):
     @staticmethod
     def sg_builder(direction: str, target_group: Union[str, dict], label_from_to: str,
                    rule: dict, rule_number: int) -> CloudFormationResource:
-        """
-
-        :param direction:
-        :param target_group:
-        :param label_from_to:
-        :param rule:
-        :param rule_number:
-        :return:
-        """
         if direction.lower() == 'ingress':
             description = f'From {label_from_to}'
         else:
