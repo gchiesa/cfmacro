@@ -50,7 +50,7 @@ class Rule(object):
         def is_valid_port(data):
             if data == '-1':
                 return True
-            if data.isnumeric() and 1 < int(data) < 65535:
+            if data.isnumeric() and 1 <= int(data) <= 65535:
                 return True
             return False
 

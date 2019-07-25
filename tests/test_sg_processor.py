@@ -232,6 +232,16 @@ def test_sg_builder(args: dict, outcome: CloudFormationResource):
              ],
             {'SgTest': 'sg-87654321'}
     ),
+    # test : rules as string with port range and custom resource to lookup
+    (
+            'tcp:CustomResourceLambda.security_group_id:1024-65535',
+            [Rule(proto='tcp',
+                  cidr_or_sg='CustomResourceLambda.security_group_id',
+                  from_port='1024',
+                  to_port='65535')
+             ],
+            {}
+    ),
 
 ])
 def test_parse_rules(rules, ruleset, params):
