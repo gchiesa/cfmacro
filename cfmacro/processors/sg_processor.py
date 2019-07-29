@@ -16,11 +16,12 @@ __status__ = "PerpetualBeta"
 
 
 class Rule(object):
-    def __init__(self, proto, cidr_or_sg, from_port, to_port):
+    def __init__(self, proto, cidr_or_sg, from_port, to_port, raw_rule=''):
         self.proto = proto
         self.cidr_or_sg = cidr_or_sg
         self.from_port = from_port
         self.to_port = to_port
+        self.raw_rule = raw_rule
         self._direction = None
 
     def is_cidr(self):
@@ -90,6 +91,27 @@ class Rule(object):
             raise RuntimeError('Unable to resolve cidr_or_sg: {}'.format(cidr_or_sg))
         return result
 
+    @property
+    def label(self):
+        """
+        Return a label calculated for the Rule
+        :return:
+        """
+        if self.is_cidr():
+            return 'Cidr'
+
+        if not self.raw_rule:
+            return 'Undefined'
+
+        _, resource, _ = self.raw_rule.split(':')
+        if resource.lower().startswith('parameters/'):
+            # example: Parameters/SgTest
+            label = resource.partition('/')[-1]
+        else:
+            # example: CustomResourceLambda.GroupId
+            label = resource.partition('.')[0]
+        return label
+
     def __eq__(self, other):
         return (self.proto == other.proto and
                 self.cidr_or_sg == other.cidr_or_sg and
@@ -145,9 +167,8 @@ class SgProcessor(ResourceProcessor):
     def _calculate_descriptive_labels(self, direction: str, label_from_to: str, rule: Rule) -> Tuple[str, str]:
         result_label = label_from_to
         if not result_label:
-            # use the cidr_or_sg
-            result_label = (rule.cidr_or_sg if rule.is_cidr()
-                            else rule.calculate_cidr_or_sg(rule.cidr_or_sg, self._template_params).partition('.')[0])
+            result_label = rule.label
+
         if direction == 'ingress':
             description = f'From {result_label}'
             key_label = f'From{result_label}'
@@ -260,12 +281,17 @@ class SgProcessor(ResourceProcessor):
         rule_set = []
         # for each rule entry we parse it as per format
         for rule in rules:
-            proto, cidr_or_sg, port_or_port_range = rule.strip().split(':')
-            from_port, to_port = Rule.calculate_ports(port_or_port_range)
-            rule_set.append(Rule(proto=proto.lower(),
-                                 cidr_or_sg=Rule.calculate_cidr_or_sg(cidr_or_sg, self._template_params),
-                                 from_port=from_port,
-                                 to_port=to_port))
+            try:
+                proto, cidr_or_sg, port_or_port_range = rule.strip().split(':')
+                from_port, to_port = Rule.calculate_ports(port_or_port_range)
+                rule_set.append(Rule(proto=proto.lower(),
+                                     cidr_or_sg=Rule.calculate_cidr_or_sg(cidr_or_sg, self._template_params),
+                                     from_port=from_port,
+                                     to_port=to_port, raw_rule=rule))
+            except Exception as e:
+                self.logger.error(f'Error while parsing rule: {rule}. Type: {str(type(e))}. Error: {str(e)}')
+                raise
+
         return rule_set
 
     def process(self, resource: CloudFormationResource, params: dict) -> Dict[str, dict]:
