@@ -88,13 +88,45 @@ Rule Fields
 -----------
 
 - **<protocol>** (required): the procotol for which the rule apply.
+
   - Allowed values: ``tcp, udp, icmp``
 
 - **<cidr_or_resource>** (required): this can be a valid Cidr or a string that the processor will use implement the
   Source/DestinationGroupId.
 
-  - if the value is Cidr then the output will be a Cidr also in the security group
+  - if the value is a valid **Cidr** then the output will be a Cidr also in the security group.
 
+    Example:
+
+    ``tcp:192.168.1.0/24:80`` => ``"Cidr": "192.168.1.0/24"``
+
+  - if the value has the form **Resource.Attribute** then the output will be a Fn::GetAtt to that resource and the
+    attribute the specified attribute name after the dot.
+
+    Example:
+
+    ``tcp:SgTest.GroupId:80`` => ``"DestinationGroupId": { "Fn::GetAtt": [ "SgTest", "GroupId" ] }``
+
+  - if the value has the form **Parameters/SomeParameter** then the output will be resolved by looking to the template
+    parameters and taking the value from the related entry.
+
+    Example:
+
+    ``tcp:Parameters/SgTest:80`` => ``"SourceGroupId": "sg-12345678"``
+
+  - if the value has the form **Import/SomeImport** then the output will be rendered as Fn::ImportValue with the related
+    import name.
+
+    Example:
+
+    ``tcp:Imports/SgTest:80`` => ``"DestinationGroupId": { "Fn::ImportValue": "SgTest" }``
+
+- **<port_range>** (required): a single port or a port range (Eg. 20-21) or special value ``ALL``
+
+Target Group
+------------
+
+Target group defines the Security Group on which connect the generated rule.
 
 
 
