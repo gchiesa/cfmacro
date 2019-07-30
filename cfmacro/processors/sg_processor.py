@@ -15,6 +15,11 @@ __email__ = "mail@giuseppechiesa.it"
 __status__ = "PerpetualBeta"
 
 
+def cleanup_resource_name(value):
+    blacklisted_characters = '${}-'
+    return ''.join([ch for ch in value if ch not in blacklisted_characters])
+
+
 class Rule(object):
     def __init__(self, proto, cidr_or_sg, from_port, to_port, raw_rule=''):
         self.proto = proto
@@ -113,6 +118,9 @@ class Rule(object):
         if resource.lower().startswith('parameters/'):
             # example: Parameters/SgTest
             label = resource.partition('/')[-1]
+        elif resource.lower().startswith('import/'):
+            import_value = resource.partition('/')[-1]
+            label = cleanup_resource_name(import_value)
         else:
             # example: CustomResourceLambda.GroupId
             label = resource.partition('.')[0]

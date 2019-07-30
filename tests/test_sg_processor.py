@@ -232,8 +232,8 @@ def test_target_group_to_name_target_group_label_required(target_group_id, targe
             dict(direction='ingress', target_group={'Fn::ImportValue': 'Admin-Target'}, label_from_to='TestSg',
                  label_target_group='TargetGroupLabel',
                  rule=Rule(proto='tcp', cidr_or_sg='192.168.0.0/16', from_port='80', to_port='80'),
-                 rule_number=0),
-            CloudFormationResource('TargetGroupLabelFromTestSgProtoTCPPort80To80Entry0', {
+                 rule_number=8),
+            CloudFormationResource('TargetGroupLabelFromTestSgProtoTCPPort80To80Entry8', {
                 'Type': 'AWS::EC2::SecurityGroupIngress',
                 'Properties': {
                     'GroupId': {'Fn::ImportValue': 'Admin-Target'},
@@ -245,7 +245,24 @@ def test_target_group_to_name_target_group_label_required(target_group_id, targe
                 }
             })
     ),
-
+    # TEST: 9 - testing when target group is an import simple
+    (
+            dict(direction='egress', target_group={'Ref': 'SgVPC'}, label_from_to='',
+                 rule=Rule(proto='tcp', cidr_or_sg='Import/${StackName}-SgTest',
+                           from_port='80', to_port='80', raw_rule='tcp:Import/${StackName}-SgTest:80'),
+                 rule_number=9),
+            CloudFormationResource('SgVPCToStackNameSgTestProtoTCPPort80To80Entry9', {
+                'Type': 'AWS::EC2::SecurityGroupEgress',
+                'Properties': {
+                    'GroupId': {'Ref': 'SgVPC'},
+                    'Description': 'To StackNameSgTest',
+                    'FromPort': '80',
+                    'ToPort': '80',
+                    'DestinationSecurityGroupId': {'Fn::ImportValue': {'Fn::Sub': '${StackName}-SgTest'}},
+                    'IpProtocol': 'tcp'
+                }
+            })
+    ),
 ])
 def test_sg_builder(args: dict, outcome: CloudFormationResource):
     processor = SgProcessor()
