@@ -5,10 +5,11 @@ Welcome to Cloud Formation Macro Toolkit's documentation!
    :maxdepth: 2
    :caption: Contents:
 
-   readme
+   General <readme>
    installation
    usage
-   modules
+   Processors <processors>
+   API Reference <modules>
    contributing
    authors
    history
