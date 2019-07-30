@@ -35,15 +35,21 @@ class Rule(object):
         """
         Rule cidr_or_sg support various formats
 
-
         :return:
         """
         if self.is_cidr():
             raise ValueError('Not a destination group id')
 
+        # renders Resource.GroupId likes
         if '.' in self.cidr_or_sg:
             fn_getatt_name, _, fn_getatt_attribute = self.cidr_or_sg.partition('.')
             return {'Fn::GetAtt': [fn_getatt_name, fn_getatt_attribute]}
+
+        # renders Import/something of Import/${prefix}-something
+        if self.cidr_or_sg.lower().startswith('import/'):
+            fn_import_value = self.cidr_or_sg.partition('/')[-1]
+            return {'Fn::ImportValue': {'Fn::Sub': fn_import_value}}
+
         return self.cidr_or_sg
 
     @staticmethod
@@ -148,20 +154,27 @@ class SgProcessor(ResourceProcessor):
         self._template_params = None
 
     @staticmethod
-    def target_group_to_name(tg):
+    def target_group_to_name(target_group_id, target_group_label=None):
         """ calculate the name from a target group node """
-        if isinstance(tg, dict) and tg.get('Ref', None):
-            name = tg['Ref']
-        elif isinstance(tg, dict) and tg.get('Fn::GetAtt', None):
-            name = tg['Fn::GetAtt'][0] if tg['Fn::GetAtt'][1] == 'GroupId' else None
-        elif isinstance(tg, dict) and tg.get('Fn::GetAtt', None):
-            name = tg['Fn::GetAtt'][0] if tg['Fn::GetAtt'][1] == 'security_group_id' else None
-        elif isinstance(tg, str):
-            name = tg
+        if target_group_label:
+            return target_group_label
+
+        if isinstance(target_group_id, dict) and target_group_id.get('Ref', None):
+            name = target_group_id['Ref']
+        elif isinstance(target_group_id, dict) and target_group_id.get('Fn::GetAtt', None):
+            name = target_group_id['Fn::GetAtt'][0] if target_group_id['Fn::GetAtt'][1] == 'GroupId' else None
+        elif isinstance(target_group_id, dict) and target_group_id.get('Fn::GetAtt', None):
+            name = target_group_id['Fn::GetAtt'][0] if target_group_id['Fn::GetAtt'][1] == 'security_group_id' else None
+        elif isinstance(target_group_id, dict) and target_group_id.get('Fn::ImportValue', None):
+            raise ValueError(f'TargetGroupLabel is required for the TargetGroup: {target_group_id}, but '
+                             f'TargetGroupLabel is currently: ${target_group_label}')
+        elif isinstance(target_group_id, str):
+            name = target_group_id
         else:
             name = None
         if not name:
-            raise ValueError('Unable to calculate Sg key name')
+            raise ValueError(f'Unable to calculate Sg key name. target_group_id: {target_group_id}, '
+                             f'target_group_label: {target_group_label}')
         return name
 
     def _calculate_descriptive_labels(self, direction: str, label_from_to: str, rule: Rule) -> Tuple[str, str]:
@@ -177,8 +190,10 @@ class SgProcessor(ResourceProcessor):
             key_label = f'To{result_label}'
         return description, key_label
 
-    def sg_builder(self, direction: str, target_group: Union[str, dict], label_from_to: str,
-                   rule: Rule, rule_number: int) -> CloudFormationResource:
+    def sg_builder(self, direction: str,
+                   target_group: Union[str, dict],
+                   rule: Rule, rule_number: int,
+                   label_from_to: str, label_target_group: str = None) -> CloudFormationResource:
         """
         Builds a security group cloudformation object
 
@@ -187,10 +202,11 @@ class SgProcessor(ResourceProcessor):
         :param label_from_to:
         :param rule:
         :param rule_number:
+        :param label_target_group:
         :return:
         """
         # calculate the resource name
-        resource_name = SgProcessor.target_group_to_name(target_group)
+        resource_name = SgProcessor.target_group_to_name(target_group, label_target_group)
         # calculate the labels
         description, key_label = self._calculate_descriptive_labels(direction, label_from_to, rule)
 
@@ -304,9 +320,10 @@ class SgProcessor(ResourceProcessor):
 
         result = {}
         for rule_id, rule in enumerate(rule_set):
-            sg = self.sg_builder(resource.properties['Direction'],
-                                 resource.properties['TargetGroup'],
-                                 resource.properties['FromTo'],
-                                 rule, rule_id)
+            sg = self.sg_builder(direction=resource.properties['Direction'],
+                                 target_group=resource.properties['TargetGroup'],
+                                 label_from_to=resource.properties['FromTo'],
+                                 label_target_group=resource.properties.get('TargetGroupLabel', None),
+                                 rule=rule, rule_number=rule_id)
             result[sg.name] = sg.node
         return result
