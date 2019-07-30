@@ -16,22 +16,30 @@ __status__ = "PerpetualBeta"
 # ----------------------------------------------------------------------------------------------------------------------
 
 
-@pytest.mark.parametrize('target_group, expected_output', [
+@pytest.mark.parametrize('target_group_id, target_group_label, expected_output', [
     (
             {'Ref': 'TestTargetGroup'},
+            '',
             'TestTargetGroup'
     ),
     (
             'TestTargetGroupString',
+            '',
             'TestTargetGroupString'
     ),
     (
             {'Fn::GetAtt': ['TestTargetGroup', 'GroupId']},
+            '',
             'TestTargetGroup'
-    )
+    ),
+    (
+            {'Fn::ImportValue': {'Fn::Sub': '${Test}-TargetGroupId'}},
+            'TargetGroupFromLabel',
+            'TargetGroupFromLabel'
+    ),
 ])
-def test_target_group_to_name(target_group, expected_output):
-    assert SgProcessor.target_group_to_name(target_group) == expected_output
+def test_target_group_to_name(target_group_id, target_group_label, expected_output):
+    assert SgProcessor.target_group_to_name(target_group_id, target_group_label) == expected_output
 
 
 # ----------------------------------------------------------------------------------------------------------------------
@@ -59,8 +67,23 @@ def test_target_group_to_name_wrong_input(bad_input):
 # ----------------------------------------------------------------------------------------------------------------------
 
 
+@pytest.mark.parametrize('target_group_id, target_group_label', [
+    (
+            {'Fn::ImportValue': {'Fn::Sub': '${Test}-TargetGroupId'}},
+            None,
+    ),
+])
+def test_target_group_to_name_target_group_label_required(target_group_id, target_group_label):
+    with pytest.raises(ValueError) as excinfo:
+        SgProcessor.target_group_to_name(target_group_id, target_group_label)
+    assert 'TargetGroupLabel is required' in str(excinfo.value)
+
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+
 @pytest.mark.parametrize('args, outcome', [
-    # testing with simple cidr
+    # TEST: 0 - testing with simple cidr
     (
             dict(direction='ingress', target_group='TargetGroupString', label_from_to='TestLabel',
                  rule=Rule(proto='tcp', cidr_or_sg='192.168.0.0/16', from_port='80', to_port='80'),
@@ -77,7 +100,7 @@ def test_target_group_to_name_wrong_input(bad_input):
                 }
             })
     ),
-    # testing with Fn::GetAtt for cidr that should be converted in DestinationGroupId
+    # TEST: 1 - testing with Fn::GetAtt for cidr that should be converted in DestinationGroupId
     (
             dict(direction='egress', target_group='SgVPC', label_from_to='SgTestLabel',
                  rule=Rule(proto='tcp', cidr_or_sg='CustomResourceLambda.security_group_id',
@@ -95,7 +118,7 @@ def test_target_group_to_name_wrong_input(bad_input):
                 }
             })
     ),
-    # testing when cidr is a security group (string) like sg-12345678
+    # TEST: 2 - testing when cidr is a security group (string) like sg-12345678
     (
             dict(direction='ingress', target_group='SgVPC', label_from_to='SgTestLabel',
                  rule=Rule(proto='tcp', cidr_or_sg='CustomResourceLambda.security_group_id',
@@ -113,7 +136,7 @@ def test_target_group_to_name_wrong_input(bad_input):
                 }
             })
     ),
-    # testing when target group is a ref to another group
+    # TEST: 3 - testing when target group is a ref to another group
     (
             dict(direction='egress', target_group={'Ref': 'SgVPC'}, label_from_to='SgTestLabel',
                  rule=Rule(proto='tcp', cidr_or_sg='CustomResourceLambda.GroupId',
@@ -131,7 +154,7 @@ def test_target_group_to_name_wrong_input(bad_input):
                 }
             })
     ),
-    # testing when label_from_to is empty then it's calculated based on the cidr_or_sg
+    # TEST: 4 - testing when label_from_to is empty then it's calculated based on the cidr_or_sg
     (
             dict(direction='egress', target_group={'Ref': 'SgVPC'}, label_from_to='',
                  rule=Rule(proto='tcp', cidr_or_sg='CustomResourceLambda.GroupId',
@@ -149,7 +172,8 @@ def test_target_group_to_name_wrong_input(bad_input):
                 }
             })
     ),
-    # testing when label_from_to is empty then it's calculated based on the cidr_or_sg that refers to a parameter
+    # TEST: 5 - testing when label_from_to is empty then it's calculated based on the cidr_or_sg that refers to a
+    # parameter
     (
             dict(direction='egress', target_group={'Ref': 'SgVPC'}, label_from_to='',
                  rule=Rule(proto='tcp', cidr_or_sg='sg-12345678',
@@ -167,6 +191,61 @@ def test_target_group_to_name_wrong_input(bad_input):
                 }
             })
     ),
+    # TEST: 6 - testing when a import with simple variable is in the rule
+    (
+            dict(direction='egress', target_group={'Ref': 'SgVPC'}, label_from_to='SgTest',
+                 rule=Rule(proto='tcp', cidr_or_sg='Import/Admin-SgTest',
+                           from_port='80', to_port='80', raw_rule='tcp:Import/Admin-SgTest:80'),
+                 rule_number=6),
+            CloudFormationResource('SgVPCToSgTestProtoTCPPort80To80Entry6', {
+                'Type': 'AWS::EC2::SecurityGroupEgress',
+                'Properties': {
+                    'GroupId': {'Ref': 'SgVPC'},
+                    'Description': 'To SgTest',
+                    'FromPort': '80',
+                    'ToPort': '80',
+                    'DestinationSecurityGroupId': {'Fn::ImportValue': {'Fn::Sub': 'Admin-SgTest'}},
+                    'IpProtocol': 'tcp'
+                }
+            })
+    ),
+    # TEST: 7 - testing when a import with expandable variable is in the rule
+    (
+            dict(direction='egress', target_group={'Ref': 'SgVPC'}, label_from_to='SgTest',
+                 rule=Rule(proto='tcp', cidr_or_sg='Import/${StackName}-SgTest',
+                           from_port='80', to_port='80', raw_rule='tcp:Import/${StackName}-SgTest:80'),
+                 rule_number=7),
+            CloudFormationResource('SgVPCToSgTestProtoTCPPort80To80Entry7', {
+                'Type': 'AWS::EC2::SecurityGroupEgress',
+                'Properties': {
+                    'GroupId': {'Ref': 'SgVPC'},
+                    'Description': 'To SgTest',
+                    'FromPort': '80',
+                    'ToPort': '80',
+                    'DestinationSecurityGroupId': {'Fn::ImportValue': {'Fn::Sub': '${StackName}-SgTest'}},
+                    'IpProtocol': 'tcp'
+                }
+            })
+    ),
+    # TEST: 8 - testing when target group is an import simple
+    (
+            dict(direction='ingress', target_group={'Fn::ImportValue': 'Admin-Target'}, label_from_to='TestSg',
+                 label_target_group='TargetGroupLabel',
+                 rule=Rule(proto='tcp', cidr_or_sg='192.168.0.0/16', from_port='80', to_port='80'),
+                 rule_number=0),
+            CloudFormationResource('TargetGroupLabelFromTestSgProtoTCPPort80To80Entry0', {
+                'Type': 'AWS::EC2::SecurityGroupIngress',
+                'Properties': {
+                    'GroupId': {'Fn::ImportValue': 'Admin-Target'},
+                    'Description': 'From TestSg',
+                    'FromPort': '80',
+                    'ToPort': '80',
+                    'CidrIp': '192.168.0.0/16',
+                    'IpProtocol': 'tcp'
+                }
+            })
+    ),
+
 ])
 def test_sg_builder(args: dict, outcome: CloudFormationResource):
     processor = SgProcessor()
@@ -309,7 +388,28 @@ def test_sg_builder(args: dict, outcome: CloudFormationResource):
                      to_port='65535')
             ]
     ),
-
+    # test : rules contains reference to import with simple variable name
+    (
+            'tcp:Imports/TestSgGroupId:80',
+            {},
+            [
+                Rule(proto='tcp',
+                     cidr_or_sg='Imports/TestSgGroupId',
+                     from_port='80',
+                     to_port='80')
+            ]
+    ),
+    # test : rules contains reference to import with sub to expand variable name
+    (
+            'tcp:Imports/${StackName}-TestSgGroupId:80',
+            {},
+            [
+                Rule(proto='tcp',
+                     cidr_or_sg='Imports/${StackName}-TestSgGroupId',
+                     from_port='80',
+                     to_port='80')
+            ]
+    ),
 ])
 def test_parse_rules(rules, cloudformation_parameters, result_ruleset):
     node = {
