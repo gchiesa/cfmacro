@@ -198,6 +198,11 @@ class SgProcessor(ResourceProcessor):
             key_label = f'To{result_label}'
         return description, key_label
 
+    def _calculate_port_label(self, from_port: str, to_port: str):
+        if from_port == to_port == '-1':
+            return 'ALL'
+        return f'{from_port}To{to_port}'
+
     def sg_builder(self, direction: str,
                    target_group: Union[str, dict],
                    rule: Rule, rule_number: int,
@@ -217,9 +222,11 @@ class SgProcessor(ResourceProcessor):
         resource_name = SgProcessor.target_group_to_name(target_group, label_target_group)
         # calculate the labels
         description, key_label = self._calculate_descriptive_labels(direction, label_from_to, rule)
+        # calculate the port labels
+        port_label = self._calculate_port_label(rule.from_port, rule.to_port)
 
         sg_key = (f"{resource_name}{key_label}"
-                  f"Proto{rule.proto.upper()}Port{rule.from_port}To{rule.to_port}"
+                  f"Proto{rule.proto.upper()}Port{port_label}"
                   f"Entry{rule_number}")
         sg_value = {
             'Type': f'AWS::EC2::SecurityGroup{direction.title()}',

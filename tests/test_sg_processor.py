@@ -263,6 +263,24 @@ def test_target_group_to_name_target_group_label_required(target_group_id, targe
                 }
             })
     ),
+    # TEST: 10 - testing when ports are ALL with tcp
+    (
+            dict(direction='egress', target_group={'Ref': 'SgVPC'}, label_from_to='',
+                 rule=Rule(proto='tcp', cidr_or_sg='Import/${StackName}-SgTest',
+                           from_port='-1', to_port='-1', raw_rule='tcp:Import/${StackName}-SgTest:ALL'),
+                 rule_number=10),
+            CloudFormationResource('SgVPCToStackNameSgTestProtoTCPPortALLEntry10', {
+                'Type': 'AWS::EC2::SecurityGroupEgress',
+                'Properties': {
+                    'GroupId': {'Ref': 'SgVPC'},
+                    'Description': 'To StackNameSgTest',
+                    'FromPort': '-1',
+                    'ToPort': '-1',
+                    'DestinationSecurityGroupId': {'Fn::ImportValue': {'Fn::Sub': '${StackName}-SgTest'}},
+                    'IpProtocol': 'tcp'
+                }
+            })
+    ),
 ])
 def test_sg_builder(args: dict, outcome: CloudFormationResource):
     processor = SgProcessor()
