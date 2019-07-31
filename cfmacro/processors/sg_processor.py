@@ -190,7 +190,7 @@ class SgProcessor(ResourceProcessor):
         if not result_label:
             result_label = rule.label
 
-        if direction == 'ingress':
+        if direction.lower() == 'ingress':
             description = f'From {result_label}'
             key_label = f'From{result_label}'
         else:

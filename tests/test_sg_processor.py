@@ -281,6 +281,24 @@ def test_target_group_to_name_target_group_label_required(target_group_id, targe
                 }
             })
     ),
+    # TEST: 11 - testing rule integrity
+    (
+            dict(direction='Ingress', target_group={'Ref': 'SgVPC'}, label_from_to='',
+                 rule=Rule(proto='tcp', cidr_or_sg='Import/${Adminstackname}-GIDSgVpn',
+                           from_port='22', to_port='22', raw_rule='tcp:Import/${Adminstackname}-GIDSgVpn:22'),
+                 rule_number=11),
+            CloudFormationResource('SgVPCFromAdminstacknameGIDSgVpnProtoTCPPort22To22Entry11', {
+                'Type': 'AWS::EC2::SecurityGroupIngress',
+                'Properties': {
+                    'GroupId': {'Ref': 'SgVPC'},
+                    'Description': 'From AdminstacknameGIDSgVpn',
+                    'FromPort': '22',
+                    'ToPort': '22',
+                    'SourceSecurityGroupId': {'Fn::ImportValue': {'Fn::Sub': '${Adminstackname}-GIDSgVpn'}},
+                    'IpProtocol': 'tcp'
+                }
+            })
+    ),
 ])
 def test_sg_builder(args: dict, outcome: CloudFormationResource):
     processor = SgProcessor()
