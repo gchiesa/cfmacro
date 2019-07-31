@@ -5,14 +5,26 @@ Installation
 ============
 
 
-Stable release
---------------
+Use in a lambda package
+-----------------------
+
+You need to package the lambda together with the cfmacro library and its own requirements.
+
+CFMacro also includes a utility to package your lambda with dependent requirements in order to be used
+in AWS Cloudformation.
+
+In order to prepare the lambda you need to install the library on your local development machine first.
+
+
+
+Install via PIP
+---------------
 
 To install Cloud Formation Macro Toolkit, run this command in your terminal:
 
 .. code-block:: console
 
-    $ pip install cfmacro
+    $ pip install --user cfmacro
 
 This is the preferred method to install Cloud Formation Macro Toolkit, as it will always install the most recent stable release.
 
@@ -23,8 +35,8 @@ you through the process.
 .. _Python installation guide: http://docs.python-guide.org/en/latest/starting/installation/
 
 
-From sources
-------------
+Install From sources
+--------------------
 
 The sources for Cloud Formation Macro Toolkit can be downloaded from the `Github repo`_.
 

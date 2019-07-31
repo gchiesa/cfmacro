@@ -13,24 +13,40 @@ Cloud Formation Macro Toolkit
         :target: https://cfmacro.readthedocs.io/en/latest/?badge=latest
         :alt: Documentation Status
 
-
 .. image:: https://pyup.io/repos/github/gchiesa/cfmacro/shield.svg
      :target: https://pyup.io/repos/github/gchiesa/cfmacro/
      :alt: Updates
 
 
 
-A CloudFormation Toolkit to   easily implement processor for Macro
+A CloudFormation Toolkit to easily implement processors for Cloudformation Macro
 
 
 * Free software: MIT license
 * Documentation: https://cfmacro.readthedocs.io.
 
+Why CFMacro
+-----------
+
+When you do Infrastructure as Code the main goal it's always to create modularity in your code
+and be able to reuse the patterns and template as much as possible.
+
+Some template though requires additional implementations for a specific use and with the current AWS Cloudformation
+capabilities, you cannot make such generic templates to be real blueprints.
+
+With CFMacro you can incorporate a macro transform to the template in order to pre-process the template
+while creating the change set with all the customisation you need.
+
 
 Features
 --------
 
-* TODO
+* Implements a processor engine that enables you to plug multiple processor at time and render the
+  result template by using only one lambda function.
+* Processors are easy to implement and associate to specific Custom Resource type so you can extend
+  this framework with your own additional processors.
+* Includes **SgProcessor**, a powerful and very flexible Security Group rules generator.
+
 
 Credits
 -------

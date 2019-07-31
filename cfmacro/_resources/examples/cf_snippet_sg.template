@@ -25,7 +25,7 @@
         "ServiceToken": "",
         "Direction": "Ingress",
         "Rules": { "Ref": "WhitelistTest" },
-        "FromTo": "Rabobank",
+        "FromTo": "WhitelistTest",
         "TargetGroup": { "Fn::GetAtt": [ "SgTest", "GroupId" ] }
       }
     }
