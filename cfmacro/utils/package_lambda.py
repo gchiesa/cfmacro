@@ -76,14 +76,14 @@ def main():
     package = zipfile.ZipFile(args.output_file.name, 'w')
 
     # set a temp folder
-    folder = tempfile.mkdtemp('lambda_')
-    logger.info(f'Created temporary working directory: {folder}')
+    temp_folder = tempfile.mkdtemp('lambda_')
+    logger.info(f'Created temporary working directory: {temp_folder}')
 
     if requirements:
         logger.info(f'Downloading requirements from file: {args.requirement_file.name}')
-        download_requirements(requirements, folder)
+        download_requirements(requirements, temp_folder)
         logger.info(f'Packaging requirements...')
-        add_libraries(package, folder)
+        add_libraries(package, temp_folder)
 
     # looking for additional python packages
     function_file_path = os.path.dirname(os.path.realpath(args.function_file.name))
@@ -99,8 +99,8 @@ def main():
     logger.info(f'Adding lambda function: {args.function_file.name}')
     package.write(args.function_file.name)
     package.close()
-    logger.info(f'Removing working directory: {folder}')
-    shutil.rmtree(folder)
+    logger.info(f'Removing working directory: {temp_folder}')
+    shutil.rmtree(temp_folder)
 
 
 if __name__ == '__main__':
