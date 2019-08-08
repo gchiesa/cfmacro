@@ -17,3 +17,7 @@ class CloudFormationResource(object):
     @property
     def properties(self):
         return self.node.get('Properties', None)
+
+    def add_dependencies(self, dependencies=None):
+        if dependencies:
+            self.node['DependsOn'] = dependencies

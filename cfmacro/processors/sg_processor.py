@@ -332,7 +332,8 @@ class SgProcessor(ResourceProcessor):
         # if there are not rules we return back the node unparsed
         if not rule_set:
             return {resource.name: resource.node}
-
+        # save the depends on to add it to the inner resources
+        dependencies = resource.node.get('DependsOn', None)
         result = {}
         for rule_id, rule in enumerate(rule_set):
             sg = self.sg_builder(direction=resource.properties['Direction'],
@@ -340,5 +341,6 @@ class SgProcessor(ResourceProcessor):
                                  label_from_to=resource.properties['FromTo'],
                                  label_target_group=resource.properties.get('TargetGroupLabel', None),
                                  rule=rule, rule_number=rule_id)
+            sg.add_dependencies(dependencies)
             result[sg.name] = sg.node
         return result
