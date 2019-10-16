@@ -53,12 +53,14 @@ def download_requirements(requirements, folder):
         raise
 
 
-def add_libraries(package, folder):
+def add_libraries(package, folder, query='.', glob_query='**/*'):
     logger = logging.getLogger('add-libraries')
     current_directory = os.getcwd()
     os.chdir(folder)
-    files = list(Path('.').glob('**/*'))
+    files = list(Path(query).glob(glob_query))
     for f in files:
+        if str(f).endswith('.pyc'):
+            continue
         logger.info(f'adding file {f}')
         package.write(f)
     os.chdir(current_directory)
@@ -91,9 +93,8 @@ def main():
     if level_packages:
         logger.info(f'Detected lambda sibling packages: {level_packages}')
         for folder in level_packages:
-            path_to_include = os.path.join(function_file_path, folder)
-            add_libraries(package, path_to_include)
-            logger.debug(f'Folder {path_to_include} added to the lambda package')
+            add_libraries(package, function_file_path, query=folder)
+            logger.debug(f'Folder {function_file_path}/{folder} added to the lambda package')
 
     # add the lambda code
     logger.info(f'Adding lambda function: {args.function_file.name}')
