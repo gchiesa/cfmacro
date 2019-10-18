@@ -11,6 +11,7 @@ from subprocess import CalledProcessError
 import setuptools
 
 from . import logging_format_template
+from .. import __version__
 
 __author__ = "Giuseppe Chiesa"
 __copyright__ = "Copyright 2017, Giuseppe Chiesa"
@@ -89,17 +90,35 @@ def main():
 
     # looking for additional python packages
     function_file_path = os.path.dirname(os.path.realpath(args.function_file.name))
+    # save the original folder
+    orig_path = os.getcwd()
+    # enter the function folder
+    os.chdir(function_file_path)
     level_packages = setuptools.find_packages(where=function_file_path)
     if level_packages:
-        logger.info(f'Detected lambda sibling packages: {level_packages}')
-        for folder in level_packages:
-            add_libraries(package, function_file_path, query=folder)
-            logger.debug(f'Folder {function_file_path}/{folder} added to the lambda package')
+        # in this case we need to create a python package with the lambda inside in order to be usable
+        # from AWS lambda
+        logger.info(f'Detected lambda sibling packages: {level_packages}\nA package folder will be created')
+        # create the folder name
+        python_package_path = os.path.join(temp_folder, os.path.basename(args.function_file.name).replace('.py', ''))
 
-    # add the lambda code
-    logger.info(f'Adding lambda function: {args.function_file.name}')
-    package.write(args.function_file.name)
+        # copy the content of the lambda + sibling packages and files in the python package path
+        logger.info('Copying {s} to {d}'.format(s=function_file_path, d=python_package_path))
+        shutil.copytree(function_file_path, python_package_path)
+        logger.info(f'Folder {function_file_path} added to the lambda package {python_package_path}')
+
+        # add the entire folder to the zip
+        logger.info('Adding python package: {p} to the zip'.format(p=python_package_path))
+        add_libraries(package, folder=temp_folder, query='.',
+                      glob_query='{}/**/*'.format(os.path.basename(python_package_path)))
+        logger.warning('** BE AWARE: lambda functions is reachable inside python package now!')
+    else:
+        # add the lambda code
+        logger.info(f'Adding lambda function: {args.function_file.name}')
+        package.write(args.function_file.name)
+
     package.close()
+    os.chdir(orig_path)
     logger.info(f'Removing working directory: {temp_folder}')
     shutil.rmtree(temp_folder)
 
