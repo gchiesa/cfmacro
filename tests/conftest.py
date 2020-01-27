@@ -55,6 +55,23 @@ CF_PARAMETERS_FIXTURE = {
     'WhitelistTest': ["tcp:10.0.0.1/32:80", "udp:10.10.10.0/24:53", "tcp:10.10.10.0/24:21-22"]
 }
 
+CF_NODE_FIXTURE = '''
+        {
+            "Type": "AWS::Bucket",
+            "Properties": {
+                "BucketName": { "Ref": "ParameterBucketName" },
+                "NoReplaceNeeded": "true",
+                "NoReplaceNeeded2": { "Key": "thisIsAKey", "Value": "thisIsAValue" },
+                "InnerProperty": { "Fn::Sub": [ "${data}", { "data" : { "Ref": "ParameterData" } } ] }
+                "InsideList": [
+                    { "Element": { "Ref": "ParameterElement" },
+                    { "Element2": "Value2" },
+                    { "Ref": "ParameterEntry3" }
+                ]
+            }
+        }
+'''
+
 
 @pytest.fixture()
 def cloudformation_fragment():
@@ -64,3 +81,8 @@ def cloudformation_fragment():
 @pytest.fixture()
 def cloudformation_parameters():
     return CF_PARAMETERS_FIXTURE
+
+
+@pytest.fixture()
+def cloudformation_node():
+    return json.loads(CF_NODE_FIXTURE)
