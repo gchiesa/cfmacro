@@ -1,0 +1,28 @@
+{
+    "AWSTemplateFormatVersion": "2010-09-09",
+    "Description": "test for inline stack",
+    "Transform": [
+        "CFProcessor"
+    ],
+    "Resources": {
+        "SgTest": {
+            "Type": "AWS::EC2::SecurityGroup",
+            "Properties": {
+                "GroupName": "SgTest",
+                "GroupDescription": "Security Group Test"
+            }
+        },
+        "SgTestFromWhitelistOfficeProtoTCPPort443to443Entry0": {
+            "Type": "AWS::EC2::SecurityGroupEgress",
+            "Properties": {
+                "Description": "From WhitelistOffice",
+                "IpProtocol": "tcp",
+                "FromPort": "443",
+                "ToPort": "443",
+                "CidrIp": "192.168.78.0/24",
+                "GroupId": { "Ref": "SgTest" }
+            }
+        }
+
+    }
+}

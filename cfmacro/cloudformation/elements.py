@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
-from typing import Dict, Union, List, AnyStr
+from typing import Dict, Union, List, AnyStr, Text
+import json
 
 __author__ = "Giuseppe Chiesa"
 __copyright__ = "Copyright 2017, Giuseppe Chiesa"
@@ -61,4 +62,31 @@ class CloudFormationResource(object):
             else:  # like NoReplaceNeeded
                 return
         walk(self.node, None, parameters)
+
+
+class CloudFormationTemplateException(Exception):
+    pass
+
+
+class CloudFormationTemplate(object):
+    def __init__(self, text: Text):
+        self._raw = text
+        self.template = {}
+        self.parameters = {}
+        self.resources = []
+        self.parse()
+
+    def parse(self):
+        try:
+            self.template = json.loads(self._raw)
+        except ValueError as e:
+            raise CloudFormationTemplateException(f'Invalid template. Error: {e}')
+
+        self.parameters = self.template.get('Parameters', {})
+        for res_name, res_node in self.template.get('Resources', {}).items():
+            self.resources.append(CloudFormationResource(res_name, res_node))
+
+    def update_refs_from_dict(self, parameters: Dict):
+        for resource in self.resources:  # type: CloudFormationResource
+            resource.update_refs_from_dict(parameters)
 

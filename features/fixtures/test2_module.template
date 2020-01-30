@@ -1,0 +1,33 @@
+{
+    "AWSTemplateFormatVersion": "2010-09-09",
+    "Description": "test for inline stack",
+    "Parameters": {
+        "Parameter1": {
+            "Type": "String"
+        },
+        "Parameter2": {
+            "Type": "String",
+            "Default": "defaultValue"
+        }
+    },
+    "Resources": {
+        "ResourceA": {
+            "Type": "AWS::S3::Bucket",
+            "Properties": {
+                "BucketName": { "Ref": "Parameter1" }
+            }
+        },
+        "ResourceB": {
+            "Type": "AWS::S3::Bucket",
+            "Properties": {
+                "BucketName": { "Ref": "Parameter2" }
+            }
+        },
+        "ResourceC": {
+            "Type": "AWS::S3::Bucket",
+            "Properties": {
+                "BucketName": "Test bucket C"
+            }
+        }
+    }
+}

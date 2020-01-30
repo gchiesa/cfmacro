@@ -1,0 +1,39 @@
+{
+    "AWSTemplateFormatVersion": "2010-09-09",
+    "Description": "test for inline stack",
+    "Transform": [
+        "CFProcessor"
+    ],
+    "Resources": {
+        "ResourceA": {
+            "Type": "AWS::S3::Bucket",
+            "Properties": {
+                "BucketName": "Test bucket 1"
+            }
+        },
+        "NewResourceA": {
+            "Type": "AWS::S3::Bucket",
+            "Properties": {
+                "BucketName": "Value1"
+            }
+        },
+        "NewResourceB": {
+            "Type": "AWS::S3::Bucket",
+            "Properties": {
+                "BucketName": "defaultValue"
+            }
+        },
+        "NewResourceC": {
+            "Type": "AWS::S3::Bucket",
+            "Properties": {
+                "BucketName": "Test bucket C"
+            }
+        },
+        "ResourceB": {
+            "Type": "AWS::S3::Bucket",
+            "Properties": {
+                "BucketName": "Test bucket 2"
+            }
+        }
+    }
+}
