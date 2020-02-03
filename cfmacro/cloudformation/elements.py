@@ -89,4 +89,9 @@ class CloudFormationTemplate(object):
     def update_refs_from_dict(self, parameters: Dict):
         for resource in self.resources:  # type: CloudFormationResource
             resource.update_refs_from_dict(parameters)
+        self._update_template()
 
+    def _update_template(self):
+        result = {}
+        for resource in self.resources:  # type: CloudFormationResource
+            result[resource.name] = resource.node

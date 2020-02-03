@@ -12,3 +12,5 @@ pytest-runner==4.2
 pytest-mock
 boto3-stubs[essential]
 boto3-stubs[sts]
+behave
+moto
