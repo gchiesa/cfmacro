@@ -12,11 +12,11 @@
             }
         },
         "StackInclude": {
-            "Type": "Custom::SgProcessorV1",
+            "Type": "Custom::InlineStackV1",
             "Properties": {
                 "ServiceToken": "",
                 "ResourcePrefix": "New",
-                "TemplateUri": "s3://123456789012/path/example/module.template",
+                "TemplateUri": "s3://123456789012/path/to/module/module.template",
                 "TemplateParameters": {
                     "Parameter1": "Value1"
                 }

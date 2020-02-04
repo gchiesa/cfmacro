@@ -51,7 +51,7 @@ class InlineStack(ResourceProcessor):
         """
         self.logger = logging.getLogger(self.__class__.__name__)
         self._cache = template_cache_provider or TemplateCache()
-        self._node = None
+        self._resource = None
         self._template_location = None
         self._template_parameters = None
         self._session = Session
@@ -61,7 +61,7 @@ class InlineStack(ResourceProcessor):
         Validate if all the information required are present
         :return:
         """
-        properties = self._node.get('Properties', {})
+        properties = self._resource.properties
 
         template_uri = properties.get('TemplateUri', None)
         if template_uri is None or not template_uri:
@@ -84,7 +84,7 @@ class InlineStack(ResourceProcessor):
         :param params: The main template parameters
         :return: one or more resources
         """
-        self._node = node
+        self._resource: CloudFormationResource = node
         self._validate_properties()
         try:
             template_data = self._cache.get_template_data(self._template_location)
@@ -95,11 +95,12 @@ class InlineStack(ResourceProcessor):
         self.logger.debug(f'Retrieved template data: {template_data}')
 
         # allocate the include module object
-        include_module = IncludeModule(CloudFormationTemplate(template_data))
-        generated_resources = include_module.with_parameters(params).generate_resources()
         result = {}
-        for resource in generated_resources:
-            result[resource.name] = resource.node
+        for parameter_set in self._template_parameters:
+            include_module = IncludeModule(CloudFormationTemplate(template_data))
+            generated_resources = include_module.with_parameters(parameter_set).generate_resources()
+            for resource in generated_resources:
+                result[resource.name] = resource.node
         self.logger.debug(f'Result: {result}')
         return result
 
@@ -116,7 +117,7 @@ class InlineStack(ResourceProcessor):
         aws_variables = AWSVariables()
         result = (template_uri
                   .replace('${AWS::AccountId}', aws_variables.account_id)
-                  .replace('${AWS::Region', aws_variables.region))
+                  .replace('${AWS::Region}', aws_variables.region))
         if result.startswith('https://'):
             result = result[8:]
         elif result.startswith('s3://'):

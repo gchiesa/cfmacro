@@ -39,7 +39,8 @@ class TemplateCache(object):
 
         client: S3Client = self._session.client('s3')
         response = client.get_object(Bucket=template_location.bucket, Key=template_location.key)
-        with response['Body'] as streaming_body:
-            template_text = streaming_body.read()
+        #
+        # with response['Body'] as streaming_body:
+        #     template_text = streaming_body.read()
 
-        return template_text
+        return response['Body'].read()

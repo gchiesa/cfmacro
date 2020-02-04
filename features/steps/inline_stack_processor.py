@@ -1,4 +1,5 @@
 import json
+from io import BytesIO
 from pathlib import Path
 import pytest
 import boto3
@@ -18,8 +19,8 @@ def file_to_cf_template(filename: Path) -> CloudFormationTemplate:
 
 
 def dict_equals(dict_a, dict_b):
-    j_a = json.dumps(dict_a, sort_keys=True, indent=2)
-    j_b = json.dumps(dict_b, sort_keys=True, indent=2)
+    j_a = json.dumps(dict_a, sort_keys=True)
+    j_b = json.dumps(dict_b, sort_keys=True)
     return j_a == j_b
 
 
@@ -41,7 +42,8 @@ def step_impl(context, module, key):
     """
     context.cf_template_remote = file_to_cf_template(Path(context.fixture_path, module))
     c: S3Client = context.s3_client
-    c.put_object(Bucket=context.s3_bucket, Key=key)
+    c.put_object(Bucket=context.s3_bucket, Key=key,
+                 Body=BytesIO(json.dumps(context.cf_template_remote.template).encode()))
 
 
 @then("the outcome template match the template loaded from the fixture (?P<outcome>.+)")
